@@ -1,0 +1,20 @@
+# 操作系统
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+# 环境配置（实际配置，非模板）
+.env
+
+# 运行时生成的数据
+data/
+*.lic
+*.pem
+
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc

@@ -1,0 +1,176 @@
+version: "3.8"
+
+services:
+  # ============ 统一入口：OpenResty 反向代理 + WAF ============
+  openresty:
+    image: openresty/openresty:1.25.3.1-alpine
+    container_name: iot-gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./openresty/conf.d:/etc/nginx/conf.d:ro
+      - ./openresty/lua:/usr/local/openresty/nginx/lua:ro
+      - ./openresty/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      lucky-backend:
+        condition: service_healthy
+      lucky-frontend:
+        condition: service_started
+    networks:
+      - iot-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============ 主系统后端 API ============
+  lucky-backend:
+    image: registry.cn-shenzhen.aliyuncs.com/eyesoncar/lucky-backend:latest
+    container_name: lucky-backend
+    restart: unless-stopped
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${LUCKY_DATABASE_URL}
+      - REDIS_URL=${LUCKY_REDIS_URL}
+      - SECRET=${SECRET}
+      - DOMAIN=${DOMAIN}
+      - GEO_API_URL=${GEO_API_URL}
+      - LICENSE_ENABLED=${LICENSE_ENABLED}
+      - MACHINE_ID_PATH=${MACHINE_ID_PATH}
+      - TZ=${TIMEZONE}
+    volumes:
+      - lucky_uploads:/app/public/uploads
+      - ./data/.machine_id:/data/.machine_id
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - iot-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ============ 管理后台前端 ============
+  lucky-frontend:
+    image: registry.cn-shenzhen.aliyuncs.com/eyesoncar/lucky-frontend:latest
+    container_name: lucky-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - iot-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+
+  # ============ GPS 协议引擎 ============
+  traccar:
+    image: registry.cn-shenzhen.aliyuncs.com/eyesoncar/lucky-traccar:latest
+    container_name: traccar
+    restart: unless-stopped
+    ports:
+      # 自定义私有协议
+      - "${TRACCAR_XCUDP_PORT:-5160}:5160/udp"
+      - "${TRACCAR_XCUDP_PORT:-5160}:5160/tcp"
+      - "${TRACCAR_XCTCP_PORT:-5170}:5170/tcp"
+      # 常用协议端口（按需取消注释）
+      # - "${TRACCAR_GT06_PORT:-5023}:5023/tcp"
+      # - "${TRACCAR_H02_PORT:-5013}:5013/tcp"
+      # - "${TRACCAR_TK103_PORT:-5002}:5002/tcp"
+      # - "${TRACCAR_GPS103_PORT:-5001}:5001/tcp"
+      # - "${TRACCAR_HUABAO_PORT:-5007}:5007/tcp"
+      # - "${TRACCAR_TELTONIKA_PORT:-5027}:5027/tcp"
+      # - "${TRACCAR_MEITRACK_PORT:-5020}:5020/tcp"
+      # - "${TRACCAR_WATCH_PORT:-5093}:5093/tcp"
+      # Traccar 管理端口（仅调试用）
+      # - "${TRACCAR_ADMIN_PORT:-8082}:8082/tcp"
+    volumes:
+      - ./traccar/traccar.xml:/opt/traccar/conf/traccar.xml:ro
+      - traccar_data:/opt/traccar/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - iot-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/api/server"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ============ PostgreSQL + PostGIS ============
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: iot-postgres
+    restart: unless-stopped
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - TZ=${TIMEZONE}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init_schemas.sql:/docker-entrypoint-initdb.d/01_init_schemas.sql:ro
+    networks:
+      - iot-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ============ Redis ============
+  redis:
+    image: redis:7-alpine
+    container_name: iot-redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - iot-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+
+
+# ============ 数据持久化卷 ============
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  traccar_data:
+    driver: local
+  lucky_uploads:
+    driver: local
+
+# ============ 自定义网桥 ============
+networks:
+  iot-internal:
+    driver: bridge
+    name: iot-internal

@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE properties SYSTEM 'http://java.sun.com/dtd/properties.dtd'>
+<properties>
+
+    <!-- ======== 数据库配置 ======== -->
+    <entry key='database.driver'>org.postgresql.Driver</entry>
+    <entry key='database.url'>jdbc:postgresql://iot-postgres:5432/iot_platform?currentSchema=traccar</entry>
+    <entry key='database.user'>iot_admin</entry>
+    <entry key='database.password'>change_me_strong_password</entry>
+
+    <!-- ======== 日志配置 ======== -->
+    <entry key='logger.enable'>true</entry>
+    <entry key='logger.level'>info</entry>
+    <entry key='logger.file'>/opt/traccar/logs/tracker-server.log</entry>
+    <entry key='logger.rotate'>true</entry>
+
+    <!-- ======== 事件转发配置 ======== -->
+    <entry key='event.forward.enable'>true</entry>
+    <entry key='event.forward.url'>http://lucky-backend:8000/api/v1/webhook/traccar</entry>
+    <entry key='forward.enable'>true</entry>
+    <entry key='forward.url'>http://lucky-backend:8000/api/v1/webhook/traccar</entry>
+    <entry key='forward.json'>true</entry>
+
+    <!-- ======== Web 管理界面 ======== -->
+    <entry key='web.enable'>true</entry>
+    <entry key='web.port'>8082</entry>
+
+    <!-- ======== 自定义私有协议端口 ======== -->
+    <entry key='xcudp.port'>5160</entry>
+    <entry key='xctcp.port'>5170</entry>
+
+    <!-- ======== 常用协议端口（按需启用）======== -->
+    <!-- <entry key='gt06.port'>5023</entry> -->
+    <!-- <entry key='h02.port'>5013</entry> -->
+    <!-- <entry key='tk103.port'>5002</entry> -->
+    <!-- <entry key='gps103.port'>5001</entry> -->
+    <!-- <entry key='huabao.port'>5007</entry> -->
+    <!-- <entry key='teltonika.port'>5027</entry> -->
+    <!-- <entry key='meitrack.port'>5020</entry> -->
+    <!-- <entry key='watch.port'>5093</entry> -->
+
+    <!-- ======== 其他配置 ======== -->
+    <entry key='geocoder.enable'>false</entry>
+    <entry key='filter.enable'>true</entry>
+    <entry key='filter.distance'>10</entry>
+    <entry key='filter.maxSpeed'>960</entry>
+    <entry key='filter.invalid'>true</entry>
+    <entry key='filter.skipLimit'>1800</entry>
+
+</properties>
