@@ -23,7 +23,7 @@ NC='\033[0m' # No Color
 SKIP_CONFIG=false
 SKIP_MAP=false
 OFFLINE=false
-REGISTRY="registry.cn-shenzhen.aliyuncs.com/eyesoncar"
+REGISTRY="crpi-kb0ss7zdstcgbqc6.cn-guangzhou.personal.cr.aliyuncs.com/lucky-service"
 DATA_DIR="${SCRIPT_DIR}/data"
 PG_WAIT_TIMEOUT=60
 HEALTH_CHECK_TIMEOUT=120
@@ -346,8 +346,8 @@ pull_images() {
     fi
 
     local images=(
-        "${REGISTRY}/lucky-backend:latest"
-        "${REGISTRY}/lucky-frontend:latest"
+        "${REGISTRY}/lucky_fastapi:latest"
+        "${REGISTRY}/lucky_frontend:latest"
         "postgis/postgis:15-3.3"
         "redis:7-alpine"
         "${REGISTRY}/lucky-traccar:latest"

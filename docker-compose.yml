@@ -29,7 +29,7 @@ services:
 
   # ============ 主系统后端 API ============
   lucky-backend:
-    image: registry.cn-shenzhen.aliyuncs.com/eyesoncar/lucky-backend:latest
+    image: crpi-kb0ss7zdstcgbqc6.cn-guangzhou.personal.cr.aliyuncs.com/lucky-service/lucky_fastapi:latest
     container_name: lucky-backend
     restart: unless-stopped
     expose:
@@ -64,7 +64,7 @@ services:
 
   # ============ 管理后台前端 ============
   lucky-frontend:
-    image: registry.cn-shenzhen.aliyuncs.com/eyesoncar/lucky-frontend:latest
+    image: crpi-kb0ss7zdstcgbqc6.cn-guangzhou.personal.cr.aliyuncs.com/lucky-service/lucky_frontend:latest
     container_name: lucky-frontend
     restart: unless-stopped
     expose:
@@ -80,7 +80,7 @@ services:
 
   # ============ GPS 协议引擎 ============
   traccar:
-    image: registry.cn-shenzhen.aliyuncs.com/eyesoncar/lucky-traccar:latest
+    image: crpi-kb0ss7zdstcgbqc6.cn-guangzhou.personal.cr.aliyuncs.com/lucky-service/lucky-traccar:latest
     container_name: traccar
     restart: unless-stopped
     ports:
