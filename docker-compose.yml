@@ -114,9 +114,9 @@ services:
       retries: 5
       start_period: 40s
 
-  # ============ PostgreSQL + PostGIS ============
+  # ============ PostgreSQL + TimescaleDB + PostGIS ============
   postgres:
-    image: postgis/postgis:15-3.3
+    image: timescale/timescaledb-ha:pg15
     container_name: iot-postgres
     restart: unless-stopped
     expose:
@@ -129,6 +129,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init_schemas.sql:/docker-entrypoint-initdb.d/01_init_schemas.sql:ro
+      - ./sql/init_extensions.sql:/docker-entrypoint-initdb.d/00_init_extensions.sql:ro
+    command: >
+      postgres
+      -c shared_preload_libraries=timescaledb
+      -c timescaledb.max_background_workers=${TSDB_BG_WORKERS:-4}
+      -c max_worker_processes=${PG_MAX_WORKERS:-8}
+      -c max_parallel_workers_per_gather=${PG_PARALLEL_GATHER:-2}
+      -c max_parallel_workers=${PG_PARALLEL_WORKERS:-4}
+      -c shared_buffers=${PG_SHARED_BUFFERS:-512MB}
+      -c effective_cache_size=${PG_EFFECTIVE_CACHE:-1536MB}
+      -c work_mem=${PG_WORK_MEM:-16MB}
+      -c maintenance_work_mem=${PG_MAINT_WORK_MEM:-128MB}
+      -c max_connections=${PG_MAX_CONNECTIONS:-100}
     networks:
       - iot-internal
     healthcheck:
